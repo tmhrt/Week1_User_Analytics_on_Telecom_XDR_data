@@ -1,0 +1,5 @@
+2023-12-14 13:05:29.415 EAT [52987] LOG:  starting PostgreSQL 12.15 on x86_64-conda-linux-gnu, compiled by x86_64-conda-linux-gnu-cc (Anaconda gcc) 11.2.0, 64-bit
+2023-12-14 13:05:29.416 EAT [52987] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2023-12-14 13:05:29.423 EAT [52987] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2023-12-14 13:05:29.452 EAT [52989] LOG:  database system was shut down at 2023-12-14 13:04:32 EAT
+2023-12-14 13:05:29.457 EAT [52987] LOG:  database system is ready to accept connections

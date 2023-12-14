@@ -1,7 +1,10 @@
 import streamlit as st
 from multiapp import MultiApp
+from scripts import load_data
 from pages import overview_analysis, engagement_analysis, experience_analysis, satisfaction_analysis, model_implementation
-# import your app modules here
+
+# load the data from the slq dump to a postgress db and read it to a pandas df then save as pkl in the data/ folder
+load_data.load_data_to_df()
 
 st.set_page_config(page_title="TellCo Telecom Analytics", layout="wide")
 

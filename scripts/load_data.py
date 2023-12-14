@@ -67,22 +67,17 @@ def delete_table(table_name, connection_params):
         print("Error: Unable to connect to the database.")
 
 
-## -------------------------------------------------------------------
-
-# Example usage:
-connection_parameters = {
-    'dbname': 'telecom',
+def load_data_to_df():
+    connection_parameters = {
+    'dbname': 'telecom_db',
     'user': 'postgres',
     'password': 'postgres',
     'host': 'localhost',
     'port': '5432'
-}
-
-# Example 1: Read a table into a pandas dataframe
-df_read = read_table_to_dataframe('xdr_data', connection_parameters)
-print("DataFrame from existing table:")
-print(df_read)
-
+    }
+    df_read = read_table_to_dataframe('xdr_data', connection_parameters)
+    df_read.to_pickle("data/telecom_xdr.pkl")
+'''
 # Example 2: Write a pandas dataframe to a new table
 df_write = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})
 write_dataframe_to_table(df_write, 'new_table', connection_parameters)
@@ -93,3 +88,4 @@ update_table_by_appending(df_append, 'new_table', connection_parameters)
 
 # Example 4: Delete a table
 delete_table('new_table', connection_parameters)
+'''

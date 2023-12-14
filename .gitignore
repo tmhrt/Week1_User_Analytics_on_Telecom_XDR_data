@@ -1,6 +1,7 @@
 # ignored folders
 samples/
 resources/
+week1_db/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

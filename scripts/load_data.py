@@ -1,6 +1,9 @@
 import pandas as pd
 import psycopg2
 from sqlalchemy import create_engine
+import sys
+import os
+sys.path.insert(0, os.path.abspath('../'))
 
 def connect_to_database(connection_params: dict):
     """
@@ -77,6 +80,7 @@ def load_data_to_df():
     }
     df_read = read_table_to_dataframe('xdr_data', connection_parameters)
     df_read.to_pickle("data/telecom_xdr.pkl")
+    
 '''
 # Example 2: Write a pandas dataframe to a new table
 df_write = pd.DataFrame({'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']})

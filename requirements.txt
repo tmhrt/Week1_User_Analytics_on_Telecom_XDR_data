@@ -1,3 +1,5 @@
 streamlit
 numpy
 pandas
+psycopg2
+sqlalchemy

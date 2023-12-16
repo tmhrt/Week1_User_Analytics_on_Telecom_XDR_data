@@ -4,3 +4,10 @@ pandas
 psycopg2
 sqlalchemy
 postgresql
+matplotlib
+seaborn
+scikit_learn
+plotly
+pickle
+sklearn
+PIL

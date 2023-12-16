@@ -2,6 +2,7 @@
 week1_db/**
 samples/
 resources/
+plots/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

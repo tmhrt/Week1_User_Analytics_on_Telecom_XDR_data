@@ -7,8 +7,37 @@ class DataCleaner:
     class that handles data cleaning.
     """
     def __init__(self) -> None:
-        self.summar = DataSummarizer() 
+        self.summar = DataSummarizer()
 
+    def fill_missing(self, df, column_types):
+        '''
+        Function to fill missing values appropriately
+        The Columns can be grouped in to five different types:
+            **Categorical**:  categorical properties(string or digit) fill with some constant
+            **Time Series**:  system time stamps of events >> fill with FORWARD/BACKWARD
+            **Numerica percentage distributions**: Performanc edistribution over speed ranges in %
+            **Numerical **: the rest of numerical columns >> fill with MEAN
+                ***avarages
+                ***time-gaps
+                ***data-volumes
+        '''
+        #Fill categorical strings with 'undefined' 
+        df1 = df.fillna(value={ k:v for (k,v) in zip(column_types['cat_str'], ['undefined']*len(column_types['cat_str']))})
+
+        #Fill categorical digits with 0 
+        df2 = df1.fillna(value={ k:v for (k,v) in zip(column_types['cat_dig'], [0]*len(column_types['cat_dig']))})
+
+        #Fill Timeseries forward/backward
+        df2.loc[:,column_types['time_series']] = df2.loc[:,column_types['time_series']].ffill().bfill()
+
+        #Fill numerical percentage distributions with 0.0 as they represent missing as columns need to addup to 100% for each row
+        df3 = df2.fillna(value={ k:v for (k,v) in zip(column_types['num_dist'], [0]*len(column_types['num_dist']))})
+
+        #Fill numerical averages, time-gaps , and data volumes with mean
+        all_num = column_types['num']['time']+column_types['num']['data']+column_types['num']['avg']
+        df4 = df3.fillna(value={ k:v for (k,v) in zip(all_num, [df3[col].mean() for col in all_num])})
+
+        return df4
 
     def fill_outliers_mean(self, df, cols):
         df_temp = df.copy(deep=True)
@@ -75,130 +104,21 @@ class DataCleaner:
         
         return r_df
 
-    
-    def fill_missing_by_mode(self, df, cols=None):
-        """
-        fills missing values by mode
-        """
-        mod_fill_list = []
-        if(cols == None):
-            temp = self.summar.summ_columns(df)
-            for i in range(temp.shape[0]):
-                if(temp.iloc[i,3] == "object"):
-                    mod_fill_list.append(temp.iloc[i,0])
-        else:
-            for col in cols:
-                mod_fill_list.append(col)
-        
-        for col in mod_fill_list:
-            df[col] = df[col].fillna(df[col].mode()[0])
-        
+    def combine_datatime_with_offset(self, df, datetime_col, offset_col):
+        df['Start(Secs)'] = df[datetime_col[0]].total_seconds() + offset_col[0]
+        df['End(Secs)'] = df[datetime_col[1]].total_seconds() + offset_col[1]
         return df
 
-
-    def fill_missing_by_mean(self, df, cols=None):
-        """
-        fills missing values by mean
-        """
-        temp = self.summar.summ_columns(df)
-        mean_fill_list = []
-        
-        if cols is None:
-            for i in range(temp.shape[0]):
-                if(temp.iloc[i,3] == "float64"):
-                    mean_fill_list.append(temp.iloc[i,0])
-        else:
-            for col in cols:
-                mean_fill_list.append(col)
-        
-        for col in mean_fill_list:
-            df[col] = df[col].fillna(df[col].median())
-        
+    def convert_bytes_to_megabytes(self, df, bytes_colmns):
+        megabyte = 1048576
+        for column in bytes_colmns:
+            df[column] = df[column] / megabyte
         return df
 
-    def fill_missing_by_median(self, df, cols=None):
-        """
-        fills missing values by median.
-        """
-        temp = self.summar.summ_columns(df)
-        median_fill_list = []
-
-        if cols is None:
-            for i in range(temp.shape[0]):
-                if(temp.iloc[i,3] == "float64"):
-                    median_fill_list.append(temp.iloc[i,0])
-        else:
-            for col in cols:
-                median_fill_list.append(col)
-
-        for col in median_fill_list:
-            df[col] = df[col].fillna(df[col].median())
-        return df
-
-
-    def fill_missing_forward(self, df, cols):
-        """
-        fills missing values by value from next rows
-        """
-        for col in cols:
-            df[col] = df[col].fillna(method='ffill')
-        return df
-
-    def fill_missing_backward(self, df, cols):
-        """
-        fills missing values by value from previous rows
-        """
-        for col in cols:
-            df[col] = df[col].fillna(method='bfill')
-        return df
-
-
-    def format_number(self, df, cols):
-        """
-        format floating number variables
-        """
-        float_format_list = []
-
-        for col in cols:
-            float_format_list.append(col)
-        for col in float_format_list:
-            df[col] = df.apply(lambda row : f'{row[col]:,.2f}', axis = 1)
-
-        return df
-
-
-    def byte_to_mb(self, df, identifier):
-        """
-        converting byte to megabyte.
-        """
-        bytes_list = []
-        megabyte = 1*10e+5
-        temp = self.summar.summ_columns(df)
-        
-        for i in range(temp.shape[0]):
-            if(identifier in temp.iloc[i,0]):
-                bytes_list.append(temp.iloc[i,0])
-        
-        for col in bytes_list:
-            df[col] = df[col]/megabyte
-            df.rename(columns={col:col.replace(identifier,'(MB)')}, inplace=True)
-        return df
-
-    
-
-    def ms_to_s(self, df, identifier):
+    def ms_to_s(self, df, ms_cols):
         """
         converting ms to s.
         """
-        ms_list = []
-        second = 1000
-        temp = self.summar.summ_columns(df)
-        
-        for i in range(temp.shape[0]):
-            if(identifier in temp.iloc[i,0]):
-                ms_list.append(temp.iloc[i,0])
-        
-        for col in ms_list:
-            df[col] = df[col]/second
-            df.rename(columns={col:col.replace(identifier,'(S)')}, inplace=True)
+        for col in ms_cols:
+            df[col] = df[col]/1000
         return df

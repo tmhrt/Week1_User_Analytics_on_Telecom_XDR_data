@@ -10,6 +10,47 @@ class DataSummarizer:
     def __init__(self) -> None:
         pass
 
+    def percent_missing(self, df):
+        """
+        this function calculates the total percentage of missin values in a dataset.
+        """
+        # Calculate total number of cells in dataframe
+        totalCells = np.product(df.shape)
+
+        # Count number of missing values per column
+        missingCount = df.isnull().sum()
+
+        # Calculate total number of missing values
+        totalMissing = missingCount.sum()
+
+        # Calculate percentage of missing values
+        print("The dataset contains", round(((totalMissing/totalCells) * 100), 2), "%", "(", totalMissing,")missing values.")
+
+    def columns_missing_most_values(self, df, descript, percentage):
+        '''
+        Function returning names of columns missing atleast n% values from a dataframe
+        '''
+        colum_wise = df.isnull().sum() * 100 /df.shape[0]
+        missing_col_names = colum_wise[colum_wise > percentage].index.tolist()
+        good_col_names = [cn for cn in df.columns if cn not in missing_col_names]
+        if percentage:
+            print(" {} columns are missing moethan {}% of their values\nThey are:\n".format(len(missing_col_names), percentage))
+        else:
+            print(" {} columns are missing atleast 1 value, they are:\n".format(len(missing_col_names)))
+        with pd.option_context('expand_frame_repr', False):
+            droped = descript.loc[descript['Fields'].isin(missing_col_names)]
+            droped['% Missing'] = [colum_wise.get(col_nm) for col_nm in missing_col_names]
+            print (droped.sort_values(by=['% Missing']))
+            good = descript.loc[descript['Fields'].isin(good_col_names)]
+            if percentage:
+                print("\n The columns with atmost {}% values missing are:\n".format(percentage))
+                good['% Missing'] = [colum_wise.get(col_nm) for col_nm in good_col_names]
+                print(good.sort_values(by=['% Missing']))
+            else:
+                print("\n The columns with no values missing are:\n",good)
+
+        return missing_col_names, good_col_names
+
     def show_N_per_col(self, df, main, cols, N, target="top"):
         """
         sorts a column and shows top 10 values.
@@ -43,8 +84,20 @@ class DataSummarizer:
             sns.displot(data=df, x=cols[index], color=colors[index], kde=True, height=4, aspect=2)
             plt.title(f'Distribution of '+cols[index]+' data volume', size=20, fontweight='bold')
             plt.show()
+    
+    def plot_corr_heatmap(self, df:pd.DataFrame, cols)->None:
+        """
+        Correlation heatmap b/n selected columns plotting function.
+        """
+        mask = np.zeros_like(df[cols].corr(), dtype=bool)
+        mask[np.triu_indices_from(mask)] = True
 
-            
+        f, ax = plt.subplots(figsize=(12, 9))
+        plt.title('Pearson Correlation Matrix b/n columns',fontsize=25)
+
+        sns.heatmap(df[cols].corr(),linewidths=0.25,vmax=0.7,square=True,cmap="BuGn", #"BuGn_r" to reverse
+                    linecolor='w',annot=True,annot_kws={"size":8},mask=mask,cbar_kws={"shrink": .9});
+    '''
     def plot_box(self, df:pd.DataFrame, col:str)->None:
         """
         Boxplot plotting function.
@@ -97,21 +150,6 @@ class DataSummarizer:
         ax.set_title(title)
 
 
-    def percent_missing(self, df):
-        """
-        this function calculates the total percentage of missin values in a dataset.
-        """
-        # Calculate total number of cells in dataframe
-        totalCells = np.product(df.shape)
-
-        # Count number of missing values per column
-        missingCount = df.isnull().sum()
-
-        # Calculate total number of missing values
-        totalMissing = missingCount.sum()
-
-        # Calculate percentage of missing values
-        print("The dataset contains", round(((totalMissing/totalCells) * 100), 2), "%", "missing values.")
 
 
     def summ_columns(self, df, unique=True):
@@ -240,3 +278,4 @@ class DataSummarizer:
         """
         relation = df[cols].corr()
         return relation
+        '''

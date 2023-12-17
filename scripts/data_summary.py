@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random as random 
 
 class DataSummarizer:
     """
@@ -72,20 +73,39 @@ class DataSummarizer:
             plt.figure(figsize=(8, 4)) 
             sns.scatterplot(data = df, x=cols[i][0], y=cols[i][1], s=20, color=colors[i])
             print(self.corrMatrix(df, cols[i]))
+    
+    def plot_count(self, df, no_of_cat, col, hue_col=None):
+        #plt.style.use('fivethirtyeight')
+        plt.figure(figsize=(8, 4))
+        if hue_col:
+            sns.countplot(x=col, hue=hue_col, data=df, order=df[col].value_counts(ascending=True).iloc[(-1*no_of_cat):].index)
+            plt.title("Multi-level count plot of Top {} {} by {} ".format(no_of_cat,hue_col,col), size=20, fontweight='bold')
+        else:
+            sns.countplot(x=col, data=df, order=df[col].value_counts(ascending=True).iloc[(-1*no_of_cat):].index)
+            plt.title("Count plot of Top {} {} ".format(no_of_cat,col), size=20, fontweight='bold')
+        plt.yscale("log")
+        plt.tick_params(axis='x', rotation=90)
+        plt.show()
 
+    def plot_boxes(self, df, cols=None):
+        """
+        Box-plot plotting function.
+        """
+        if not cols:
+            cols = df.columns
+        for col in cols:
+            self.plot_box(df,col,"Outliers of {} coulmn".format(col))
 
-    def showDistribution(self, df, cols, colors):
+    def plot_distributions(self, df, cols=None):
         """
         Distribution plotting function.
         """
-        for index in range(len(cols)):
-            plt.style.use('fivethirtyeight')
-            plt.figure(figsize=(8, 4)) 
-            sns.displot(data=df, x=cols[index], color=colors[index], kde=True, height=4, aspect=2)
-            plt.title(f'Distribution of '+cols[index]+' data volume', size=20, fontweight='bold')
-            plt.show()
+        if not cols:
+            cols = df.columns
+        for col in cols:
+            self.plot_hist(df,col,(random.random(),random.random(),random.random()))
     
-    def plot_corr_heatmap(self, df:pd.DataFrame, cols)->None:
+    def plot_corr_heatmap(self, df:pd.DataFrame, cols):
         """
         Correlation heatmap b/n selected columns plotting function.
         """
@@ -93,10 +113,70 @@ class DataSummarizer:
         mask[np.triu_indices_from(mask)] = True
 
         f, ax = plt.subplots(figsize=(12, 9))
-        plt.title('Pearson Correlation Matrix b/n columns',fontsize=25)
+        plt.title("Correlation heatmap b/n columns",fontsize=25)
 
         sns.heatmap(df[cols].corr(),linewidths=0.25,vmax=0.7,square=True,cmap="BuGn", #"BuGn_r" to reverse
-                    linecolor='w',annot=True,annot_kws={"size":8},mask=mask,cbar_kws={"shrink": .9});
+                    linecolor='w',annot=True,annot_kws={"size":8},mask=mask,cbar_kws={"shrink": .9})
+        plt.show()
+    
+    def plot_hist(self, df:pd.DataFrame, column:str, color:str)->None:
+        plt.figure(figsize=(12, 7))
+        sns.displot(data=df, x=column, color=color, kde=True, height=7, aspect=2)
+        plt.title(f'Distribution of {column}', size=20, fontweight='bold')
+        plt.show()
+
+    def plot_bar(self, df:pd.DataFrame, x_col:str, y_col:str, title:str, xlabel:str, ylabel:str)->None:
+        plt.figure(figsize=(12, 7))
+        sns.barplot(data = df, x=x_col, y=y_col)
+        plt.title(title, size=20)
+        plt.xticks(rotation=75, fontsize=14)
+        plt.yticks( fontsize=14)
+        plt.xlabel(xlabel, fontsize=16)
+        plt.ylabel(ylabel, fontsize=16)
+        plt.show()
+
+    def plot_box(self, df:pd.DataFrame, x_col:str, title:str) -> None:
+        plt.figure(figsize=(12, 7))
+        sns.boxplot(data = df, x=x_col)
+        plt.title(title, size=20)
+        plt.xticks(rotation=75, fontsize=14)
+        plt.xscale("log")
+        plt.show()
+
+    def plot_box_multi(self, df:pd.DataFrame, x_col:str, y_col:str, title:str) -> None:
+        plt.figure(figsize=(12, 7))
+        sns.boxplot(data = df, x=x_col, y=y_col)
+        plt.title(title, size=20)
+        plt.xticks(rotation=75, fontsize=14)
+        plt.yticks( fontsize=14)
+        plt.xscale("log")
+        plt.show()
+
+    def plot_scatter(self, df: pd.DataFrame, x_col: str, y_col: str, title: str, hue: str, style: str) -> None:
+        plt.figure(figsize=(12, 7))
+        sns.scatterplot(data = df, x=x_col, y=y_col, hue=hue, style=style)
+        plt.title(title, size=20)
+        plt.xticks(fontsize=14)
+        plt.yticks( fontsize=14)
+        plt.show()
+
+        
+    def summarise_columns(self, df, unique=True):
+        """
+        shows columns and their missing values along with data types.
+        """
+        df2 = df.isna().sum().to_frame().reset_index()
+        df2.rename(columns = {'index':'variables', 0:'missing_count'}, inplace = True)
+        df2['missing_percent_(%)'] = round(df2['missing_count']*100/df.shape[0])
+        data_type_lis = df.dtypes.to_frame().reset_index()
+        df2['data_type'] = data_type_lis.iloc[:,1]
+        
+        if(unique):
+            unique_val = []
+            for i in range(df2.shape[0]):
+                unique_val.append(len(pd.unique(df[df2.iloc[i,0]])))
+            df2['unique_values'] = pd.Series(unique_val)
+        return df2.sort_values(by=['missing_percent_(%)'])
     '''
     def plot_box(self, df:pd.DataFrame, col:str)->None:
         """
@@ -127,32 +207,7 @@ class DataSummarizer:
             plt.show()
 
 
-    def plot_pie(self, df, col, title):
-        """
-        pie chart plotting function.
-        """
-        # Wedge properties
-        wp = { 'linewidth' : 1, 'edgecolor' : "black" }
-
-        # Creating autocpt arguments
-        def func(pct, allvalues):
-            absolute = int(pct / 100.*np.sum(allvalues))
-            return "{:.1f}%\n({:d} g)".format(pct, absolute)
-        
-        fig, ax = plt.subplots(figsize =(10, 7))
-        wedges, texts, autotexts = ax.pie(df[col[1]],
-                                    autopct = lambda pct: func(pct, df[col[1]]),
-                                    labels = df[col[0]].to_list(),
-                                    startangle = 90,
-                                    wedgeprops = wp,)
-
-        plt.setp(autotexts, size = 8, weight ="bold")
-        ax.set_title(title)
-
-
-
-
-    def summ_columns(self, df, unique=True):
+    def summarise_columns(self, df, unique=True):
         """
         shows columns and their missing values along with data types.
         """

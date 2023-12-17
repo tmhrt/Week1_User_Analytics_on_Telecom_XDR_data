@@ -38,47 +38,6 @@ class DataCleaner:
         df4 = df3.fillna(value={ k:v for (k,v) in zip(all_num, [df3[col].mean() for col in all_num])})
 
         return df4
-
-    def fill_outliers_mean(self, df, cols):
-        df_temp = df.copy(deep=True)
-        for col in cols:
-            ''' Detection '''
-            # IQR
-            Q1 = df_temp[col].quantile(0.25)
-
-            Q3 = df_temp[col].quantile(0.75)
-            IQR = Q3 - Q1
-
-            length=df_temp.shape[0]
-            for index in range(length):
-                if(df_temp.loc[index,col] >= (Q3+1.5*IQR)):
-                    df_temp.loc[index,col] = np.nan
-
-            ''' filling the Outliers '''
-            df_temp = self.fill_missing_by_median(df_temp, cols)
-
-        return df_temp
-
-
-    def removeOutliers(self, df,cols):
-        df_temp = df.copy(deep=True)
-        for col in cols:
-            ''' Detection '''
-            # IQR
-            Q1 = df_temp[col].quantile(0.25)
-
-            Q3 = df_temp[col].quantile(0.75)
-            IQR = Q3 - Q1
-            rm_lis = []
-            length=df_temp.shape[0]
-            for index in range(length):
-                if(df_temp.loc[index,col] >= (Q3+1.5*IQR)):
-                    rm_lis.append(index)
-
-            ''' Removing the Outliers '''
-            df_temp.drop(rm_lis, inplace = True)
-
-        return df_temp
     
     def remove_cols(self, df, cols, keep=False):
         """
@@ -107,6 +66,13 @@ class DataCleaner:
     def combine_datatime_with_offset(self, df, datetime_col, offset_col):
         df['Start(Secs)'] = df[datetime_col[0]].total_seconds() + offset_col[0]
         df['End(Secs)'] = df[datetime_col[1]].total_seconds() + offset_col[1]
+        return df
+
+    def fix_outliers(self, df, columns=None):
+        if not columns:
+            columns = df.columns
+        for column in columns:
+            df[column] = np.where(df[column] > df[column].quantile(0.95), df[column].median(),df[column])
         return df
 
     def convert_bytes_to_megabytes(self, df, bytes_colmns):
